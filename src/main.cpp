@@ -1,46 +1,100 @@
 #include <cassert>
 #include <cstdio>
-#include <iostream>
-#include <memory>
-#include <string>
-#include <sstream>
 #include <fstream>
-#include "ast.h"
+#include <iostream>
+#include <sstream>
+// #include <argp.h>
+#include <unistd.h>
+#include <getopt.h>
 #include "../debug/koopa.h"
 
-using namespace std;
-
-// 声明 lexer 的输入, 以及 parser 函数
-// 为什么不引用 sysy.tab.hpp 呢? 因为首先里面没有 yyin 的定义
-// 其次, 因为这个文件不是我们自己写的, 而是被 Bison 生成出来的
-// 你的代码编辑器/IDE 很可能找不到这个文件, 然后会给你报错 (虽然编译不会出错)
-// 看起来会很烦人, 于是干脆采用这种看起来 dirty 但实际很有效的手段
 extern FILE *yyin;
-extern int yyparse(unique_ptr<BaseAST> &ast);
 
-int main(int argc, const char *argv[]) {
-  // 解析命令行参数. 测试脚本/评测平台要求你的编译器能接收如下参数:
-  // compiler 模式 输入文件 -o 输出文件
-  assert(argc == 5);
-  auto mode = argv[1];
-  auto input = argv[2];
-  auto output = argv[4];
+#include "ast.h"
+#include "ir.h"
+#include "sysy.tab.hpp"
 
-  // 打开输入文件, 并且指定 lexer 在解析的时候读取这个文件
-  yyin = fopen(input, "r");
-  assert(yyin);
+extern char* optarg;
+extern int optind, opterr, optopt;
+static const struct option long_opt_args[] = {
+	{"koopa", no_argument, NULL, 1001},
+	{"riscv", no_argument, NULL, 1002},
+	{"output", required_argument, NULL, 1003},
+	{"o", required_argument, NULL, 1003},
+	{0, 0, 0, 0}
+};
 
-  // parse input file
-  unique_ptr<BaseAST> ast;
-  auto ret = yyparse(ast);
-  assert(!ret);
+bool output_koopa = false;
 
-  // dump AST
-  std::ostringstream oss;
-  ast->Dump(oss);
-  string str = oss.str();
-  std::ofstream outFile(output);
-  outFile << str;
-  
-  return 0;
+int main(int argc, char **argv) {
+	int now_opt = 0;
+	std::string outp;
+	while((now_opt = getopt_long_only(argc, argv, "", long_opt_args, NULL)) != -1){
+		switch(now_opt){
+			case 1001:
+				output_koopa = true;
+				break;
+			case 1002:
+				output_koopa = false;
+				break;
+			case 1003:
+				outp = optarg;
+				break;
+			case '?':
+				std::cerr << "I can't understand, so...\n";
+				std::cerr << "world.execute(me);\n";
+				return 114514;
+			default:
+				assert(0);
+		}
+	}
+
+	yyin = fopen(argv[optind], "r");
+	assert(yyin);
+
+	std::unique_ptr<BaseAST> ast;
+	do{
+		auto ret = yyparse(ast);
+		assert(!ret);
+	} while(0);
+
+	std::string outstr;
+	std::ostringstream outstrbuf;
+
+	ast->Dump(outstrbuf);
+	outstr = outstrbuf.str();
+
+	if(output_koopa){
+		if(outp.empty()){
+			std::cout << outstr;
+		} else {
+			std::ofstream outp_stream(outp);
+			outp_stream << outstr;
+		}
+		return 0;
+	}
+
+	koopa_raw_program_t raw_prog;
+	koopa_raw_program_builder_t builder = koopa_new_raw_program_builder();
+	do{
+		koopa_program_t program;
+		koopa_error_code_t ret = koopa_parse_from_string(outstr.c_str(), &program);
+		assert(ret == KOOPA_EC_SUCCESS);  // 确保解析时没有出错
+		raw_prog = koopa_build_raw_program(builder, program);
+		koopa_delete_program(program);
+	} while(0);
+
+	outstrbuf.str("");
+	dfs_ir(raw_prog, outstrbuf);
+	outstr = outstrbuf.str();
+
+	if(outp.empty()){
+		std::cout << outstr;
+	} else {
+		std::ofstream outp_stream(outp);
+		outp_stream << outstr;
+	}
+
+	koopa_delete_raw_program_builder(builder);
+	return 0;
 }

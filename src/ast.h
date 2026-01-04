@@ -3,6 +3,7 @@
 #include<iostream>
 #include<string>
 #include<sstream>
+#include <memory>
 
 // 所有 AST 的基类
 class BaseAST {
