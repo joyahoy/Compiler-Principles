@@ -30,9 +30,9 @@ public:
         std::cout << "fun @";
         std::cout << ident << "(): ";
         func_type->Dump();
-        std::cout << " { ";
+        std::cout << " {" << std::endl;
         block->Dump();
-        std::cout << " } ";
+        std::cout << "}" << std::endl;
     }
 };
 
@@ -50,7 +50,7 @@ public:
     std::unique_ptr<BaseAST> stmt;
 
     void Dump() const override {
-        std::cout << "%entry: ";
+        std::cout << "%entry:" << std::endl;
         stmt->Dump();
     }
 };
@@ -60,7 +60,7 @@ public:
     int number;
 
     void Dump() const override {
-        std::cout << "ret ";
-        std::cout << number;
+        std::cout << "  ret ";
+        std::cout << number << std::endl;
     }
 };

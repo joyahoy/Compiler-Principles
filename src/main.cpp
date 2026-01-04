@@ -33,8 +33,9 @@ int main(int argc, const char *argv[]) {
   assert(!ret);
 
   // dump AST
+  freopen(output,"w",stdout);
   ast->Dump();
-  cout << endl;
+  fclose(stdout);
 
   return 0;
 }
