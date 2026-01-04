@@ -2,21 +2,22 @@
 
 #include<iostream>
 #include<string>
+#include<sstream>
 
 // 所有 AST 的基类
 class BaseAST {
 public:
     virtual ~BaseAST() = default;
-
-  virtual void Dump() const = 0;
+    
+    virtual void Dump(std::ostringstream &ost) const = 0;
 };
 
 class CompUnitAST : public BaseAST {
 public:
     std::unique_ptr<BaseAST> func_def;
 
-    void Dump() const override {
-        func_def->Dump();
+    void Dump(std::ostringstream &ost) const override {
+        func_def->Dump(ost);
     }
 };
 
@@ -26,13 +27,13 @@ public:
     std::string ident;
     std::unique_ptr<BaseAST> block;
 
-    void Dump() const override {
-        std::cout << "fun @";
-        std::cout << ident << "(): ";
-        func_type->Dump();
-        std::cout << " {" << std::endl;
-        block->Dump();
-        std::cout << "}" << std::endl;
+    void Dump(std::ostringstream &ost) const override {
+        ost << "fun @";
+        ost << ident << "(): ";
+        func_type->Dump(ost);
+        ost << " {" << std::endl;
+        block->Dump(ost);
+        ost << "}" << std::endl;
     }
 };
 
@@ -40,8 +41,8 @@ class FuncTypeAST : public BaseAST {
 public:
     std::string type;
 
-    void Dump() const override {
-        std::cout << type;
+    void Dump(std::ostringstream &ost) const override {
+        ost << type;
     }
 };
 
@@ -49,9 +50,9 @@ class BlockAST : public BaseAST {
 public:
     std::unique_ptr<BaseAST> stmt;
 
-    void Dump() const override {
-        std::cout << "%entry:" << std::endl;
-        stmt->Dump();
+    void Dump(std::ostringstream &ost) const override {
+        ost << "%entry:" << std::endl;
+        stmt->Dump(ost);
     }
 };
 
@@ -59,8 +60,8 @@ class StmtAST : public BaseAST {
 public:
     int number;
 
-    void Dump() const override {
-        std::cout << "  ret ";
-        std::cout << number << std::endl;
+    void Dump(std::ostringstream &ost) const override {
+        ost << "  ret ";
+        ost << number << std::endl;
     }
 };

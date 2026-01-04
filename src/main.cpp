@@ -3,7 +3,10 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <sstream>
+#include <fstream>
 #include "ast.h"
+#include "../debug/koopa.h"
 
 using namespace std;
 
@@ -33,9 +36,11 @@ int main(int argc, const char *argv[]) {
   assert(!ret);
 
   // dump AST
-  freopen(output,"w",stdout);
-  ast->Dump();
-  fclose(stdout);
-
+  std::ostringstream oss;
+  ast->Dump(oss);
+  string str = oss.str();
+  std::ofstream outFile(output);
+  outFile << str;
+  
   return 0;
 }
