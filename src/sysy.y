@@ -83,25 +83,25 @@ FuncDef
 // 同上, 不再解释
 FuncType
   : INT {
-    auto functype = new FuncTypeAST();
-    functype->type = new string("int");
-    $$ = functype;
+    auto ast = new FuncTypeAST();
+    ast->type = "i32";
+    $$ = ast;
   }
   ;
 
 Block
   : '{' Stmt '}' {
-    auto block = new BlockAST(); 
-    block->stmt = unique_ptr<BaseAST>($2);
-    $$ = block;
+    auto ast = new BlockAST(); 
+    ast->stmt = unique_ptr<BaseAST>($2);
+    $$ = ast;
   }
   ;
 
 Stmt
   : RETURN Number ';' {
-    auto stmt = new StmtAST();
-    stmt->number = $2;
-    $$ = stmt;
+    auto ast = new StmtAST();
+    ast->number = $2;
+    $$ = ast;
   }
   ;
 
